@@ -1,0 +1,66 @@
+// index.html (basic version for GitHub Pages)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DNA Sequence Explorer</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
+    input { padding: 0.5rem; font-size: 1rem; width: 100%; margin-bottom: 1rem; }
+    code { font-size: 1.1rem; }
+    ul { margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>DNA Sequence Explorer</h1>
+  <input id="search" type="text" placeholder="Search motif (e.g. TATAAA)" />
+  <div id="results"></div>
+
+  <script>
+    const resultsDiv = document.getElementById('results');
+    const searchBox = document.getElementById('search');
+
+    const sequences = Array.from({ length: 1000 }, () => {
+      const bases = ['A', 'T', 'C', 'G'];
+      return Array.from({ length: 20 }, () => bases[Math.floor(Math.random() * 4)]).join('');
+    });
+
+    function gcContent(seq) {
+      const gc = (seq.match(/[GC]/g) || []).length;
+      return gc / seq.length;
+    }
+
+    function entropy(seq) {
+      const counts = {};
+      for (let char of seq) counts[char] = (counts[char] || 0) + 1;
+      return -Object.values(counts).reduce((sum, count) => {
+        const p = count / seq.length;
+        return sum + p * Math.log2(p);
+      }, 0) / 2;
+    }
+
+    function getComments(seq) {
+      const comments = [];
+      if (gcContent(seq) < 0.35) comments.push("Low GC content; likely unstable.");
+      if (seq.includes("TATAAA")) comments.push("Strong core promoter potential.");
+      if (entropy(seq) > 0.8) comments.push("Highly randomized; unlikely in nature.");
+      return comments;
+    }
+
+    function render() {
+      const query = searchBox.value.toUpperCase();
+      const filtered = sequences.filter(seq => seq.includes(query)).slice(0, 50);
+      resultsDiv.innerHTML = '';
+      filtered.forEach(seq => {
+        const div = document.createElement('div');
+        div.innerHTML = `<code>${seq}</code><ul>${getComments(seq).map(c => `<li>${c}</li>`).join('')}</ul>`;
+        resultsDiv.appendChild(div);
+      });
+    }
+
+    searchBox.addEventListener('input', render);
+    render();
+  </script>
+</body>
+</html>
